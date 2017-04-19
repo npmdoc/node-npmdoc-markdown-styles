@@ -1,0 +1,514 @@
+<html><head></head><body><div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a href="https://github.com/mixu/markdown-styles#readme">markdown-styles (v3.1.9)</a>
+</h1>
+<h4>Markdown to HTML generator and multiple CSS themes for Markdown</h4>
+<div class="apidocSectionDiv"><a href="#apidoc.tableOfContents" id="apidoc.tableOfContents"><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.markdown-styles">module markdown-styles</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.markdown-styles.convertMd">
+            function <span class="apidocSignatureSpan">markdown-styles.</span>convertMd
+            <span class="apidocSignatureSpan">(argv)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.markdown-styles.pipeline">
+            function <span class="apidocSignatureSpan">markdown-styles.</span>pipeline
+            <span class="apidocSignatureSpan">(argv)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.markdown-styles.render">
+            function <span class="apidocSignatureSpan">markdown-styles.</span>render
+            <span class="apidocSignatureSpan">(argv, onDone)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.markdown-styles.resolveArgs">
+            function <span class="apidocSignatureSpan">markdown-styles.</span>resolveArgs
+            <span class="apidocSignatureSpan">(argv)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.markdown-styles" id="apidoc.module.markdown-styles">module markdown-styles</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.markdown-styles.convertMd" id="apidoc.element.markdown-styles.convertMd">
+        function <span class="apidocSignatureSpan">markdown-styles.</span>convertMd
+        <span class="apidocSignatureSpan">(argv)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">convertMd = function (argv) {
+  if (!argv) {
+    // default to true to match bin/generate-md
+    argv = { 'header-links': true };
+  }
+
+  // custom rendered for headings
+  var renderer = new md.marked.Renderer();
+  // Note: the fourth argument is NOT part of the regular Marked interface - I'm adding
+  // it (in markdown-stream-utils) so that id generation can live in one place.
+  // I wish marked's API would give me direct access to the token in the renderer itself :'(
+  renderer.heading = function(text, level, raw, token) {
+    // the 4th parameter is an addition so check whether we got that parameter before accessing it
+    var id = this.options.headerPrefix + (token ? token.id : raw);
+    return '&lt;h' +
+      level +
+      ' id="' +
+      id +
+      '"&gt;' +
+      // if we want to generate header links, add the &lt;a&gt; link
+      (argv['header-links'] ?
+        '&lt;a class="header-link" href="#' + id + '"&gt;&lt;/a&gt;' : '') +
+      text +
+      '&lt;/h' +
+      level +
+      '&gt;\n';
+  };
+
+  renderer.link = function(href, title, text) {
+    if (this.options.sanitize) {
+      try {
+       var prot = decodeURIComponent(unescape(href))
+          .replace(/[^\w:]/g, '')
+          .toLowerCase();
+      } catch (e) {
+        return '';
+      }
+      if (prot.indexOf('javascript:') === 0 || prot.indexOf('vbscript:') === 0) {
+        return '';
+      }
+    }
+    var parsed = url.parse(href);
+    // convert [.md] in local links (e.g. links with no protocol)
+    if (!parsed.protocol) {
+      var ext = path.extname(parsed.pathname || '');
+      if (ext === '.markdown' ||
+          ext === '.mdown' ||
+          ext === '.mkd' ||
+          ext === '.mkdn' ||
+          ext === '.md') {
+        var dirname = path.dirname(parsed.pathname);
+        parsed.pathname = dirname +
+              (dirname.charAt(dirname.length - 1) === '/' ? '' : '/') +
+              path.basename(parsed.pathname, ext) + '.html';
+        href = url.format(parsed);
+      }
+    }
+
+    var out = '&lt;a href="' + href + '"';
+    if (title) {
+      out += ' title="' + title + '"';
+    }
+    out += '&gt;' + text + '&lt;/a&gt;';
+    return out;
+  };
+
+  return md.convertMd({
+    renderer: renderer
+  });
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+    if (title) {
+      out += ' title="' + title + '"';
+    }
+    out += '&gt;' + text + '&lt;/a&gt;';
+    return out;
+  };
+
+  return md.<span class="apidocCodeKeywordSpan">convertMd</span>({
+    renderer: renderer
+  });
+};
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.markdown-styles.pipeline" id="apidoc.element.markdown-styles.pipeline">
+        function <span class="apidocSignatureSpan">markdown-styles.</span>pipeline
+        <span class="apidocSignatureSpan">(argv)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">pipeline = function (argv) {
+  if (!argv.meta) {
+    // load the metadata file if it exists
+    argv.meta = fs.existsSync(argv.input + '/meta.json') ? require(argv.input + '/meta.json') : {};
+  }
+
+  return pi.pipeline([
+      md.parseHeader(),
+      md.parseMd(),
+      md.annotateMdHeadings(),
+      md.highlight(function(code, lang) {
+        if (argv.highlight &amp;&amp; typeof argv.highlight[lang] === 'function') {
+          return argv.highlight[lang](code, lang);
+        }
+        return false;
+      }),
+      convertMd({
+        'header-links': argv['header-links']
+      }),
+
+      // map paths
+      setOutputPath({
+        input: argv.input,
+        output: argv.output,
+        isSingleFile: argv.isSingleFile,
+        'asset-path': argv['asset-path']
+      }),
+
+      // merge metadata now that relative is set
+      mergeMeta(argv.meta),
+
+      // apply handlebars templates
+      applyTemplate({
+        // read the template
+        template: fs.readFileSync(argv.layout + '/page.html', 'utf8'),
+        partials: fs.existsSync(argv.layout + '/partials') ? argv.layout + '/partials' : [],
+        helpers: fs.existsSync(argv.layout + '/helpers') ? argv.layout + '/helpers' : []
+      })
+  ]);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+If any markdown file in `./input/foo/` defines a metadata value called `repoUrl`, then that value will override the value from `
+meta.json`.
+
+### API
+
+- `.resolveArgs(argv)`: given a hash containing command line args, returns the fully resolved arguments. This does two things: it
+ takes care of relative paths and loads the modules passed via `highlight-*` so that they can be invoked as functions when highlighting
+ a specific language.
+- `.render(argv, onDone)`: given a hash of resolved arguments, it processes every file just like the command line tool; this includes
+ copying files.
+- `.<span class="apidocCodeKeywordSpan">pipeline</span>(argv)`: given a hash of resolved arguments, it returns a writable object
+ mode stream that accepts objects with the following keys:
+- `path` (an absolute path to the input file name),
+- `stat` (the fs.stat object associated with the input file),
+- `contents` (a string with the content of the input file).
+- Since `v3.1.3`, the `pipeline` function supports a couple of arguments that are not exposed on the CLI (in addition to all the
+ CLI args):
+- `meta`: a hash of JSON (the contents of a meta.json file if you prefer to set that explicitly)
+- `asset-path`: a full path to the `/assets` folder, defaults to `${output}/assets`.
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.markdown-styles.render" id="apidoc.element.markdown-styles.render">
+        function <span class="apidocSignatureSpan">markdown-styles.</span>render
+        <span class="apidocSignatureSpan">(argv, onDone)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">render = function (argv, onDone) {
+
+  var finalDone = onDone || function() {};
+  var doneCount = 0;
+  var expectedDoneCount = 2;
+  onDone = function() {
+      if (++doneCount == expectedDoneCount) {
+          finalDone();
+      }
+  };
+
+
+  // --export
+  if (argv['export']) {
+    pi.fromArray(
+      glob.sync(path.normalize(argv['export']).replace(/\/$/, '') + '/**')
+    ).pipe(pi.filter(function(filename) {
+          var stat = fs.statSync(filename);
+          return stat.isFile();
+        }))
+        .pipe(stream.copy(function(filename) {
+          var target = path.normalize(filename.replace(argv['export'], argv.output + '/'));
+          console.log('Copy layout file', filename, '=&gt;', target);
+          return target;
+        }))
+        .pipe(pi.devnull().once('finish', finalDone));
+    return;
+  }
+
+  var isSingleFile = fs.statSync(argv.input).isFile();
+  argv.isSingleFile = isSingleFile;
+
+  pi.fromArray(
+    glob.sync(isSingleFile ? argv.input : argv.input.replace(new RegExp(path.sep + '$'), '') + '/**')
+    ).pipe(pi.head([
+
+    pi.filter(function(filename) {
+      var stat = fs.statSync(filename);
+      return stat.isFile();
+    }),
+
+    pi.match(
+      // for non-markdown files: copy the file.
+      function(filename) {
+        var ext = path.extname(filename);
+        if (ext === '.markdown' ||
+            ext === '.mdown' ||
+            ext === '.mkd' ||
+            ext === '.mkdn' ||
+            ext === '.md') {
+          return false;
+        }
+        return true;
+      },
+      stream.copy(function(filename) {
+        if (path.basename(filename) === 'meta.json') {
+          return false;
+        }
+        var target = path.normalize(filename.replace(argv.input, argv.output));
+        console.log('Copy non-markdown file', filename, '=&gt;', target);
+        return target;
+      }),
+      // rest:
+      pi.head([
+        stream.read(),
+        pipeline(argv),
+        stream.write().once('finish', onDone)
+      ])
+    )
+  ]));
+
+
+  // copy assets
+  var assetDir = path.normalize(argv.layout + '/assets').replace(/\/$/, '');
+  if (fs.existsSync(assetDir)) {
+    pi.fromArray(glob.sync(assetDir + '/**'))
+        .pipe(pi.filter(function(filename) {
+          var stat = fs.statSync(filename);
+          return stat.isFile();
+        }))
+        .pipe(stream.copy(function(filename) {
+          var target = path.normalize(filename.replace(assetDir, argv.output + '/assets/'));
+          console.log('Copy asset file', filename, '=&gt;', target);
+          return target;
+        }))
+        .pipe(pi.devnull().once('finish', onDone));
+  } else {
+    console.log('Assets path does not exist: ' + assetDir + ', so no assets were copied.');
+    // always call onDone to increment the number of completed tasks
+    onDone();
+  }
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+would make the metadata value `{{repoUrl}}` available in the template for all input files to `DEFAULT` except for input files in
+ `./input/foo/`. For `./input/foo/*` and all subdirectories, `repoUrl` would be set to `MORE SPECIFIC`.
+
+If any markdown file in `./input/foo/` defines a metadata value called `repoUrl`, then that value will override the value from `
+meta.json`.
+
+### API
+
+- `.resolveArgs(argv)`: given a hash containing command line args, returns the fully resolved arguments. This does two things: it
+ takes care of relative paths and loads the modules passed via `highlight-*` so that they can be invoked as functions when highlighting
+ a specific language.
+- `.<span class="apidocCodeKeywordSpan">render</span>(argv, onDone)`: given a hash of resolved arguments, it processes every file
+ just like the command line tool; this includes copying files.
+- `.pipeline(argv)`: given a hash of resolved arguments, it returns a writable object mode stream that accepts objects with the
+following keys:
+- `path` (an absolute path to the input file name),
+- `stat` (the fs.stat object associated with the input file),
+- `contents` (a string with the content of the input file).
+- Since `v3.1.3`, the `pipeline` function supports a couple of arguments that are not exposed on the CLI (in addition to all the
+ CLI args):
+- `meta`: a hash of JSON (the contents of a meta.json file if you prefer to set that explicitly)
+- `asset-path`: a full path to the `/assets` folder, defaults to `${output}/assets`.
+...</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.markdown-styles.resolveArgs" id="apidoc.element.markdown-styles.resolveArgs">
+        function <span class="apidocSignatureSpan">markdown-styles.</span>resolveArgs
+        <span class="apidocSignatureSpan">(argv)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">resolveArgs = function (argv) {
+  // defaults
+  argv.input = path.resolve(process.cwd(), argv.input || './input/');
+  argv.output = path.resolve(process.cwd(), argv.output || './output/');
+  if (!argv.layout) {
+    if (argv['export']) {
+      argv.layout = argv['export'];
+    } else {
+      argv.layout = 'github';
+    }
+  }
+
+  if (argv.template) {
+    throw new Error('--template is deprecated in v2.0, please point --layout to ' +
+      'the layout directory with ./page.html in it.');
+  }
+  if (argv['asset-dir'] || argv.assetDir) {
+    throw new Error('--asset-dir is deprecated in v2.0, please point --layout to ' +
+      'the layout directory with ./page.html and ./assets in it.');
+  }
+  if (argv.command) {
+    throw new Error('--command is deprecated in v2.0');
+  }
+  if (argv.runner) {
+    throw new Error('--runner is deprecated in v2.0');
+  }
+
+  // we only accept a single layout argument, --layout
+  if (argv.layout &amp;&amp; argv.layout.charAt(0) === '/' &amp;&amp; fs.existsSync(argv.layout)) {
+    // 1) it can be an absolute path to a folder with ./page.html
+    argv.layout = path.normalize(argv.layout);
+  } else if (fs.existsSync(process.cwd() + '/' + argv.layout)) {
+    // 2) it can be a relative path
+    argv.layout = path.normalize(process.cwd() + '/' + argv.layout);
+  } else if (fs.existsSync(layoutDir + argv.layout + '/')) {
+    // 3c) it can be the name of a builtin layout
+    argv.layout = path.normalize(layoutDir + argv.layout + '/');
+  }
+
+  if (argv['export']) {
+    argv['export'] = argv.layout;
+  }
+
+  // in node.js 6.x path.dirname expects a string
+  if(argv.template &amp;&amp; typeof argv.template === 'string') {
+    // set up partials and helpers directories
+    var layoutBase = path.dirname(argv.template);
+    ['partials', 'helpers'].forEach(function(name) {
+      if (argv[name]) {
+        argv[name] = path.resolve(process.cwd(), argv[name]);
+      } else if (fs.existsSync(layoutBase + '/' + name)) {
+        // if the folder exists in the layout, use it automatically
+        argv[name] = layoutBase + '/' + name;
+      }
+    });
+  }
+
+  // parse --highlight-&lt;extension&gt;
+  var hl = {};
+
+  Object.keys(argv).forEach(function(name) {
+    var matched = (typeof name === 'string' ? name.match(/highlight\-(.*)/) : false);
+    if (matched) {
+      var ext = matched[1];
+      argv[name] = findModule(argv[name], [process.cwd, __dirname]);
+      try {
+        hl[ext] = require(argv[name]);
+      } catch(err) {
+        console.error(err);
+        throw err;
+      }
+    }
+  });
+
+  argv['highlight'] = hl;
+  return argv;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+
+would make the metadata value `{{repoUrl}}` available in the template for all input files to `DEFAULT` except for input files in
+ `./input/foo/`. For `./input/foo/*` and all subdirectories, `repoUrl` would be set to `MORE SPECIFIC`.
+
+If any markdown file in `./input/foo/` defines a metadata value called `repoUrl`, then that value will override the value from `
+meta.json`.
+
+### API
+
+- `.<span class="apidocCodeKeywordSpan">resolveArgs</span>(argv)`: given a hash containing command line args, returns the fully
+resolved arguments. This does two things: it takes care of relative paths and loads the modules passed via `highlight-*` so that
+ they can be invoked as functions when highlighting a specific language.
+- `.render(argv, onDone)`: given a hash of resolved arguments, it processes every file just like the command line tool; this includes
+ copying files.
+- `.pipeline(argv)`: given a hash of resolved arguments, it returns a writable object mode stream that accepts objects with the
+following keys:
+- `path` (an absolute path to the input file name),
+- `stat` (the fs.stat object associated with the input file),
+- `contents` (a string with the content of the input file).
+- Since `v3.1.3`, the `pipeline` function supports a couple of arguments that are not exposed on the CLI (in addition to all the
+ CLI args):
+- `meta`: a hash of JSON (the contents of a meta.json file if you prefer to set that explicitly)
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
+</body></html>
